@@ -25,6 +25,7 @@ This repo uses a **src/** layout:
 - Shell scripts for run and setup on Linux: `scripts/`
 - Secondary programs: `tools/`
 - Tests: `tests/`
+- Computer-Aided design assets: `cad-assets/`
 
 ## Installation
 
