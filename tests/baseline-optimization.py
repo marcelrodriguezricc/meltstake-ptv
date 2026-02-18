@@ -10,19 +10,16 @@ res_y = 1200 # Sensor array pixels-per-column, specified by OG02B1B documentatio
 pixel_pitch = 0.003 # Distance between center of each pixel in mm
 
 # Disparity uncertainty
-sigma_d = 1.0 # Conservative estimate for underwater scene, std. dev. noise in pixels
+sigma_d = 0.5 # Conservative estimate for underwater scene, std. dev. noise in pixels
 
 # Target requirements
-sigmaZ_req = 1.0 # Maximum allowed std. dev. depth uncertainty
+sigmaZ_req = 0.5 # Maximum allowed std. dev. depth uncertainty
 Zmin = 100 # Minimum resolvable depth in mm, set based on camera lens minimum focus distance
-Zmax = 602 # Maximum resolvable depth in mm, set based on distance from sensor to surface of ice
+Zmax = 150 # Maximum resolvable depth in mm, set based on distance from sensor to surface of ice
 
 # Possible baseline range
 b_min = 50 # Minimum baseline range, based on width of camera (approximate pinhole distance if they were touching)
 b_max = 500 # Maximum baseline range, chosen arbitrarily
-
-# Modeling parameters
-num_samples = 10000
 
 # ----- FUNCTIONS -----
 
@@ -42,7 +39,7 @@ def overlap_area_at_Z(b_mm, Z_mm, theta_x, theta_y):
     return W_ov * H # Multiply by height to return area
 
 def resolvable_volume_for_baseline(b_mm):
-    Zs = np.linspace(Zmin, Zmax, num_samples) # Discretize depth axis (approximate integral)
+    Zs = np.linspace(Zmin, Zmax, 2000) # Discretize depth axis (approximate integral)
     Aov = overlap_area_at_Z(b_mm, Zs, theta_x, theta_y) # Compute overlap area at each discrete depth 
     sigZ = depth_sigma_Z(b_mm, Zs, fl_pixels, sigma_d) # Compute depth uncertainty
     limit_workspace = np.where(sigZ <= sigmaZ_req, Aov, 0.0) # Only count overlap are where depth precision is acceptable
@@ -59,13 +56,16 @@ fl_pixels = focal_length / pixel_pitch
 sensor_w = res_x * pixel_pitch
 sensor_h = res_y * pixel_pitch
 
+
 # FOV (radians)
 # Getting FOV angle by using arctangent, where focal length is the adjacent side and one half of the sensor is the opposite side
 theta_x = 2 * np.arctan(sensor_w / (2 * focal_length)) # Horizontal FOV angle
 theta_y = 2 * np.arctan(sensor_h / (2 * focal_length)) # Vertical FOV angle
-
+print(theta_x, theta_y)
+print(fov(100, theta_x), fov(100, theta_y))
 # Baseline sweep
-b_sweep = np.linspace(b_min, b_max, num_samples)
+b_sweep = np.linspace(b_min, b_max, 400)
+
 V = np.array([resolvable_volume_for_baseline(bi) for bi in b_sweep])
 
 # Get optimal baseline

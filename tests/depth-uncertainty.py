@@ -10,14 +10,14 @@ res_y = 1200
 pixel_pitch = 0.003 
 
 # Disparity uncertainty
-sigma_d = 0.5
+sigma_d = 1.0
 
 # Depth range (mm)
-Zmin = 100
-Zmax = 602
+Zmin = 200
+Zmax = 400
 
 # Fixed baseline (mm)
-b_fixed = 148
+b_fixed = 60
 
 # ----- FUNCTIONS -----
 
