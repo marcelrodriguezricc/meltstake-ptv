@@ -13,11 +13,11 @@ pixel_pitch = 0.003
 sigma_d = 1.0
 
 # Depth range (mm)
-Zmin = 200
-Zmax = 400
+Zmin = 0
+Zmax = 500
 
 # Fixed baseline (mm)
-b_fixed = 60
+b_fixed = 50
 
 # ----- FUNCTIONS -----
 
@@ -44,6 +44,6 @@ plt.plot(Zs, sigZ, label=rf"$b={b_fixed}$ mm, $\sigma_d={sigma_d}$ px")
 plt.xlabel("Depth Z (mm)")
 plt.ylabel(r"Depth uncertainty $\sigma_Z$ (mm)")
 plt.grid(True)
-plt.title("Depth uncertainty vs depth (fixed baseline)")
+plt.title(f"Depth uncertainty with {b_fixed}mm baseline")
 plt.legend()
 plt.show()
