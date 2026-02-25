@@ -1,4 +1,4 @@
-# Stereo System Optimization Model
+# Stereo System Optimization
 
 Our primary goal is to select the ideal lens for our system. To do so, we will, for a range of focus distances:
 
@@ -55,9 +55,9 @@ D_{\text{far}} =
 $$
 
 --- 
-## 2. Pixel noise disparity
+## 2. Noise induced pixel disparity
 
-Given that the environment we're operating in has the possibility of being highly turbid and the effects of complex mixes of saline and freshwater on light attenuation, and used the Beer-Lambert Law for radiation beam attenuation for our model of pixel noise disparity as a function of depth, and selected a baseline standard deviation $\sigma_{b}$ 100 mm: 
+Given that the environment we're operating in has the possibility of being highly turbid and the effects of complex mixes of saline and freshwater on light attenuation, and used the Beer-Lambert Law for radiation beam attenuation for our model of noise induced pixel disparity as a function of depth, and selected a baseline standard deviation $\sigma_{b}$ $100$ mm: 
 
 $$
 \sigma_p(Z) = \sigma_{b} e^{\beta Z}
@@ -121,4 +121,5 @@ V(b) = \int_{Z_{\min}}^{Z_{\max}} A_{\text{eff}}(Z)\, dZ
 $$
 
 The optimal baseline is that which maximizes the resolvable volume: 
-$$V_{max}$$
+$$b_{opt} = arg\underset{b}maxV(b)
+$$

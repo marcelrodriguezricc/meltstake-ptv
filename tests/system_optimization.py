@@ -111,7 +111,7 @@ for i, focus_distance in enumerate(focus_sweep_mm):
     V_best[i] = V[j]
     b_opt_list[i] = b_sweep[j]
 
-# Plot (line + labeled points)
+# Plot
 plt.figure()
 plt.plot(focus_sweep_mm, V_best) 
 plt.scatter(focus_sweep_mm, V_best) 
