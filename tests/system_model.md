@@ -39,13 +39,13 @@ Where:
 
 Then, we calculated the near and far focus distances from the following formulae:
 
-Near Focus Distance
+Near Focus Distance:
 
 $$
 D_{\text{near}} = \frac{H s}{H + (s - f)}
 $$
 
-Far Focus Distance
+Far Focus Distance:
 
 $$
 D_{\text{far}} =
@@ -56,13 +56,16 @@ D_{\text{far}} =
 \end{cases}
 $$
 
+Where:
+- $s$ = focus distance
+
 --- 
 ## 2. Pixel noise disparity
 
-Given that the environment we're operating in has the possibility of being highly turbid and the effects of complex mixes of saline and freshwater on light attenuation, and used the Beer-Lambert Law for radiation beam attenuation for our model of pixel noise disparity as a function of depth, and selected a conservative baseline standard deviation $\sigma_{b}$ of 1 pixel at $Z = 100$ mm: 
+Given that the environment we're operating in has the possibility of being highly turbid and the effects of complex mixes of saline and freshwater on light attenuation, and used the Beer-Lambert Law for radiation beam attenuation for our model of pixel noise disparity as a function of depth, and selected a baseline standard deviation $\sigma_{b}$ 100 mm: 
 
 $$
-\sigma_d(Z) = \sigma_{b} e^{\beta Z}
+\sigma_p(Z) = \sigma_{b} e^{\beta Z}
 $$
 
 Where:
@@ -71,13 +74,26 @@ Where:
 - $\beta$ = effective attenuation / degradation coefficient
 - $Z$ = depth
 
+
+
 ---
 ## 3. Baseline optimization and resolvable volume
 
-To optimize the baseline for maximum resolvable volume, we tested a number range of baselines, and included only overlapping regions that satisfied a maximum depth disparity $\sigma_{Z,\text{req}}$ of 0.5 mm to maintain millimeter resolution. 
+To optimize the baseline for maximum resolvable volume, we tested a number range of baselines, and included only overlapping regions that satisfied a maximum depth disparity $\sigma_{Z,\text{req}}$ of 0.5 mm to maintain millimeter resolution. For each possible baseline at a number of depths in our workspace range, the depth disparity was calculated by the stereo vision formula:
+
+$$
+\sigma_Z(Z) = \frac{Z^2}{f_{px} \, b} \, \sigma_{p}
+$$
+
+Where:
+
+- $\sigma_{z}$ = depth disparity uncertainty at $Z$
+- $\sigma_{p}$ = pixel disparity uncertainty at $Z$
+- $f_{px}$ = focal length (pixels)
+- $b$ = baseline
 
 
-For a number of depths within our workspace range, we calculated the linear field of view at depth $Z$:
+We also calculated the linear field of view at depth $Z$:
 
 $$
 W(Z) = 2 Z \tan\left(\frac{\theta_x}{2}\right)
@@ -87,13 +103,13 @@ $$
 H(Z) = 2 Z \tan\left(\frac{\theta_y}{2}\right)
 $$
 
-the overlap:
+And the overlap:
 
 $$
 A_{ov}(Z) = W_{ov}(Z)\, H(Z)
 $$
 
-used those to calculated effective area:
+So we could calculate the effective area by:
 
 $$
 A_{\text{eff}}(Z) =
@@ -103,8 +119,11 @@ A_{ov}(Z), & \text{if } \sigma_Z(Z) \le \sigma_{Z,\text{req}} \\
 \end{cases}
 $$
 
-and used the trapezoidal approximation rule to get our maximum workspace volume:
+And used the trapezoidal approximation rule to get our maximum resolvable volume:
 
 $$
 V(b) = \int_{Z_{\min}}^{Z_{\max}} A_{\text{eff}}(Z)\, dZ
 $$
+
+The optimal baseline is that which maximizes the resolvable volume: 
+$$V_{max}$$
