@@ -23,9 +23,7 @@ Set the following constraints for a range of possible baselines, with the minimu
 ## 1. Depth of field 
 
 
-We calculated the depth of field to specify the extents of our workspace. We used the size of a pixel $d_p$ as the size of our circle of confusion $c$ which specified the required sharpness before a subject is considered "blurry".
-
-First, we obtained the hyperfocal distance by the following formula:
+We calculated the depth of field to specify the extents of our workspace. We used the size of a pixel $d_p$ as the size of our circle of confusion $c$ which specified the required sharpness before a subject is considered "blurry". We obtained the hyperfocal distance by the following formula:
 
 $$
 H = \frac{f^2}{N c} + f
@@ -37,7 +35,7 @@ Where:
 - $N$ = f-number (aperture ratio)  
 - $c$ = circle of confusion 
 
-Then, we calculated the near and far focus distances from the following formulae:
+Then, we calculated the near and far focus extents from the following formulae considering focus distance of the lens $s$:
 
 Near Focus Distance:
 
@@ -55,9 +53,6 @@ D_{\text{far}} =
 \frac{H s}{H - (s - f)}, & s < H
 \end{cases}
 $$
-
-Where:
-- $s$ = focus distance
 
 --- 
 ## 2. Pixel noise disparity
