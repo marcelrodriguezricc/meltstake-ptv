@@ -15,7 +15,7 @@ Controller/data handler for integrating a stereo pair of **Deepwater Exploration
 - Target OS: **Debian 13 (Trixie) Lite** (Raspberry Pi)
 - Tested on: **Debian 13 (Trixie) Lite** (Raspberry Pi)
 
-This software is written utilizing the V4L2 (Video4Linux2) Linux kernel API for capture, output, and encoding/decoding video from a stereo pair Deepwater stellarHD cameras. Capture settings vary by camera model and backend, and to avoid unneeded complexity in configuration parsing, this software only supports that camera/backend pairing.
+This software is written utilizing the **V4L2 (Video4Linux2)** Linux kernel API for capture, output, and encoding/decoding video from a stereo pair **Deepwater stellarHD cameras**. Capture settings vary by camera model and backend, and to avoid unneeded complexity in configuration parsing, this software only supports that camera/backend pairing.
 
 ## Project Layout
 
