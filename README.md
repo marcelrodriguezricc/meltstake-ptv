@@ -10,9 +10,12 @@ Controller/data handler for integrating a stereo pair of **Deepwater Exploration
 
 ## Requirements
 
+- Hardware: A stereo pair of **Deepwater Exploration stellarHD** cameras, WetLink/Cobalt/SubConn to USB converter
 - Python **3.11+** (project currently uses Python 3.11.x)
 - Target OS: **Debian 13 (Trixie) Lite** (Raspberry Pi)
-- Tested on: **Debian 13 (Trixie) Lite** (Raspberry Pi) and **Mac OS**
+- Tested on: **Debian 13 (Trixie) Lite** (Raspberry Pi)
+
+This software is written utilizing the V4L2 (Video4Linux2) Linux kernel API for capture, output, and encoding/decoding video from a stereo pair Deepwater stellarHD cameras. Capture settings vary by camera model and backend, and to avoid unneeded complexity in configuration parsing, this software only supports that camera/backend pairing.
 
 ## Project Layout
 
@@ -25,7 +28,7 @@ This repo uses a **src/** layout:
 - Shell scripts for run and setup on Linux: `scripts/`
 - Secondary programs: `tools/`
 - Tests: `tests/`
-- Computer-Aided design assets: `cad-assets/`
+- Computer-Aided design assets for camera mount, calibration objects, etc: `cad-assets/`
 
 ## Installation
 
@@ -67,7 +70,6 @@ The CLI typically accepts the following arguments:
 
 Example: 
 ```bash
-python -m meltstake_sonar --config default_config.toml --data /Users/me/Desktop/ms01_2026-02-09_2020
 ```
 
 Config lookup behavior is intended to support filename only (under `configs/`), e.g. `--config config.toml`.
