@@ -52,7 +52,7 @@ python -m meltstake_ptv
 If you prefer not to install the package, you can run using `PYTHONPATH`:
 
 ```bash
-PYTHONPATH=src python -m meltstake_sonar
+PYTHONPATH=src python -m meltstake_ptv
 ```
 
 After initialization, press Enter to begin capture. While capturing, entering "s", "quit", "exit", "q", "stop" will terminate the deployment.

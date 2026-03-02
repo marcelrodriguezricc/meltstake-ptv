@@ -1,7 +1,3 @@
-import serial
-import threading
-import logging
-import serial.tools
 import threading
 from pathlib import Path
 
@@ -11,11 +7,7 @@ from . import record
 class Handler:
     config: str | Path
     data_dir: Path
-    data_path: Path
-    init_time: str
-    connection: dict
-    device: serial.Serial
-    indices: list[int] = []
+    camera_ctl: dict
 
     def __init__(self, config: str = "default_config.toml", data_dir: str | None = None):
 
@@ -26,6 +18,9 @@ class Handler:
         # Initialize data directory and log file
         bootstrap.init_data_dir(self.data_dir)
         bootstrap.create_log_file()
+
+        # From configuration file - populate camera control setting dictionary
+        self.camera_ctl = bootstrap.parse_config(self.config)
         
     def start_recording(self, stop_event: threading.Event | None = None) -> None:
-        record.record(self.indices, stop_event)
+        record.record(self.camera_ctl, stop_event)

@@ -1,6 +1,3 @@
-from __future__ import annotations
-import cv2
-from pathlib import Path
 import threading
 
 def set_data_path(data_path):
