@@ -33,9 +33,8 @@ def main() -> None:
     # Parse arguments from CLI execution
     args = utils.parse_args()
 
-    # Setup logging if debug flag is given
-    setup_logging(args.debug)
-    log.debug("Debugging enabled...")
+    # Instantiate debug argument in variable
+    debug = args.debug
 
     # Get data directory from arguments
     data_dir=f"{args.data}/ptv"
@@ -43,21 +42,35 @@ def main() -> None:
     # Initialize handler object, pass configuration name and data directory path
     handler = Handler(args.config, data_dir)
 
-    # Print instructions for listener
-    user = input("Press Enter to start recording video (or type 's' then Enter to stop): ").strip().lower()
-    if user in {"s", "quit", "exit", "q", "stop"}:
-        return
+    # If debugging is enabled...
+    if debug:
 
-    # Start thread for listener
-    stop_event = threading.Event()
-    t = threading.Thread(target=_quit_listener, args=(stop_event,), daemon=True)
-    t.start()
+        # Setup logging
+        setup_logging(debug)
+        log.debug("Debugging enabled...")
 
-    # Tell handler to start recording
-    try:
+        # Print instructions for listener
+        user = input("Press Enter to start recording video (or type 's' then Enter to stop): ").strip().lower()
+        if user in {"s", "quit", "exit", "q", "stop"}:
+            return
+
+        # Start thread for listener
+        stop_event = threading.Event()
+        t = threading.Thread(target=_quit_listener, args=(stop_event,), daemon=True)
+        t.start()
+
+        # Tell handler to start recording
+        try:
+            handler.start_recording(stop_event=stop_event)
+        except KeyboardInterrupt:
+            stop_event.set()
+
+    # If debugging is not enabled...
+    else:
+        
+        # Record without listening for loop break
+        stop_event = None
         handler.start_recording(stop_event=stop_event)
-    except KeyboardInterrupt:
-        stop_event.set()
 
 if __name__ == "__main__":
     main()
