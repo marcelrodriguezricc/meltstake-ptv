@@ -1,0 +1,95 @@
+# PTV Configuration
+
+# ~~~~~ Camera Controls ~~~~~
+# These parameters dictate sensor behavior, exposure time should be the first parameter tuned per deployment
+
+[camera_ctl]
+
+# ---- Auto Exposure (auto_exposure) -----
+# Camera automatically calibrates exposure time based on scene, should be set to manual for PTV which assumes exposure time is constant
+# (menu) auto = 0, manual = 1, shutter priority = 2, aperture priority = 3
+
+auto_exposure = 1
+
+# ----- Exposure Time (exposure_time_absolute) -----
+# Duration that the camera sensor is exposed to light in microseconds, long exposure allows more light to reach sensor but introduces motion blur, only active when auto exposure is set to manual
+# (int) min = 1, max = 5000, step = 1
+
+exposure_time = 157
+
+# ----- Dynamic Framerate (exposure_dynamic_framerate) -----
+# Camera automatically adjusts framerate for longer exposures, should be disabled for PTV which assumes framerate is constant
+# (bool) disabled = 0, enabled = 1
+
+dynamic_fr = 0
+
+# ~~~~~ Backend Controls ~~~~~
+# These parameters dictate the video capture/encoder API behavior; settings that affect post-capture should generally remain at their default values as these adjustments can be made later if necessary; non-linear effects should be disabled for PTV
+
+[backend_ctl]
+
+# ----- Brightness -----
+# Post-capture brightness offset, should remain at 0 for PTV
+# (int) min = -64, max = 64, step = 1
+
+bright = 0
+
+# ----- Contrast -----
+# Post-capture dynamic range compression, should remain at default for PTV
+# (int) min = 0, max = 64, step = 1
+
+contrast = 42
+
+# ----- Saturation -----
+# Color intensity scaling, no impact for monochrome
+# (int) min = 0, max = 128, step = 1
+
+saturation = 64
+
+# ----- Hue -----
+# Rotates color space, cosmetic and irrelevant for monochrome
+# (int) min = -40, max = 40, step = 1
+
+hue = 0
+
+# ----- Automatic White Balance (white_balance_automatic) -----
+# Dynamic white balancing, turn OFF for PTV applications which assume this is constant
+# (bool)
+
+auto_wb = 0
+
+# ----- Gamma -----
+# Nonlinear intensity curve adjustment, values > 100 brighten shadows and compress highlights, values < 100 darken shadows
+# (int) min = 72, max = 500, step = 1
+
+gamma = 100
+
+# ----- Gain -----
+# Electronic signal amplification, higher gain will brighten scene but introduce noise, increase exposure first before adjusting this as needed
+# (int) min = 0, max = 100, step = 1
+
+gain = 0
+
+# ----- Power line frequency (power_line_frequency) -----
+# Should be set according to power supply specifications
+# (menu) disabled = 0, 50 Hz = 1, 60 Hz = 2
+
+pl_freq = 2
+
+# ----- White Balance Temperature (white_balance_temperature) -----
+# Color temperature in kelvin, should be match to light source, 2800 for warm light, 6500 for white light
+# (int) min = 2800, max = 6500, step = 1
+
+wb_temp = 4600
+
+# ----- Sharpness -----
+# Post-capture edge enhancing filter, set to 0 for PTV to maintain linear and intrinsic intensity relationships
+# (int) min = 0, max = 6, step = 1
+
+sharp = 0
+
+# ----- Backlight Compenstation (backlight_compensation) -----
+# Boosts dark foreground if bright background exists, set to 0 for PTV to maintain linear and intrinsic intensity relationships
+# (int) min = 0, max = 20, step = 1
+
+bl_comp = 0
