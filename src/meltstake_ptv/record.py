@@ -2,6 +2,10 @@ import threading
 import subprocess
 import time
 import re
+import select
+import sys
+import json
+from pathlib import Path
 
 from . import utils
 
@@ -48,19 +52,26 @@ def _apply_config(device: str, camera_ctl: dict[str, int]) -> None:
         utils.append_log(f"Successfully applied configuration to {device}")
 
 def _monitor_fps(proc: subprocess.Popen, expected_fps: int):
+
+    if proc.stderr is None:
+        utils.append_log("Monitor thread: stderr pipe is None.")
+        return
+
     fps_pattern = re.compile(r"fps=\s*([\d\.]+)")
     drop_pattern = re.compile(r"drop=\s*(\d+)")
     dup_pattern = re.compile(r"dup=\s*(\d+)")
 
     last_drop = 0
+    
+    start = time.time()
 
     for line in proc.stderr:
         # FPS check
         fps_match = fps_pattern.search(line)
-        if fps_match:
+        if fps_match and time.time() - start > 2.0:
             current_fps = float(fps_match.group(1))
             if current_fps < expected_fps * 0.95:
-                utils.append_log(f"⚠ FPS DROP: {current_fps:.2f}")
+                utils.append_log(f"FPS DROP: {current_fps:.2f}")
 
         # Drop check
         drop_match = drop_pattern.search(line)
@@ -68,7 +79,7 @@ def _monitor_fps(proc: subprocess.Popen, expected_fps: int):
             current_drop = int(drop_match.group(1))
             if current_drop > last_drop:
                 dropped_now = current_drop - last_drop
-                utils.append_log(f"⚠ FRAMES DROPPED: +{dropped_now} (total={current_drop})")
+                utils.append_log(f"FRAMES DROPPED: +{dropped_now} (total={current_drop})")
                 last_drop = current_drop
 
         # Duplicate check
@@ -76,7 +87,45 @@ def _monitor_fps(proc: subprocess.Popen, expected_fps: int):
         if dup_match:
             dup_count = int(dup_match.group(1))
             if dup_count > 0:
-                utils.append_log(f"⚠ DUPLICATED FRAMES: {dup_count}")
+                utils.append_log(f"DUPLICATED FRAMES: {dup_count}")
+
+def _report_file_stats(out_file: Path) -> None:
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v", "error",
+                "-select_streams", "v:0",
+                "-count_frames",
+                "-show_entries",
+                "stream=nb_read_frames,avg_frame_rate,duration",
+                "-of", "json",
+                str(out_file),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        data = json.loads(result.stdout)
+        stream = data["streams"][0]
+
+        frames = int(stream.get("nb_read_frames", 0))
+        duration = float(stream.get("duration", 0))
+        avg_rate = stream.get("avg_frame_rate", "0/0")
+
+        # Convert avg_frame_rate (e.g. "60/1") to float
+        num, den = avg_rate.split("/")
+        actual_fps = float(num) / float(den) if float(den) != 0 else 0.0
+
+        utils.append_log(
+            f"FINAL STATS: {out_file.name} | "
+            f"frames={frames} | duration={duration:.2f}s | "
+            f"avg_fps={actual_fps:.2f}"
+        )
+
+    except Exception as e:
+        utils.append_log(f"Failed to extract stats for {out_file}: {e}")
 
 def set_data_path(data_path):
     """Set global data path variable for "record" module."""
@@ -86,10 +135,6 @@ def set_data_path(data_path):
 
 def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
 
-    data_path = _DATA_PATH
-    out_file = data_path / f"{device.replace('/', '_')}.mkv"
-    out_file.parent.mkdir(parents=True, exist_ok=True)
-
     _apply_config(device, camera_ctl)
 
     fps = camera_ctl["fps"]
@@ -98,6 +143,20 @@ def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
     format_val = camera_ctl["format"]
 
     format_str = "mjpeg" if format_val == 0 else "yuyv422"
+
+    if format_val == 0:
+        format_str = "mjpeg"
+        ext = ".mkv"
+        vcodec = "copy"
+    else:
+        format_str = "yuyv422"
+        ext = ".mkv"
+        vcodec = "libx264"
+
+    data_path = Path(_DATA_PATH)
+    dev_name = Path(device).name
+    out_file = data_path / f"{dev_name}{ext}"
+    out_file.parent.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         "ffmpeg",
@@ -110,12 +169,11 @@ def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
         "-video_size", f"{res_x}x{res_y}",
         "-input_format", format_str,
         "-i", device,
-        "-c:v", "copy",
+        "-c:v", vcodec,
         str(out_file),
     ]
 
     return subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
-
 
 def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | None = None) -> None:
     procs = [device_record(device, camera_ctl) for device in devices]
@@ -123,6 +181,8 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
     # Start one monitor thread per process
     monitors: list[threading.Thread] = []
     expected_fps = int(camera_ctl["fps"])
+
+    utils.append_log(f"Starting recording for devices: {devices}")
 
     for device, proc in zip(devices, procs):
         t = threading.Thread(
@@ -133,16 +193,34 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
         )
         t.start()
         monitors.append(t)
+    
+    start_t = time.monotonic()
+    next_heartbeat = start_t + 10.0
 
     try:
         while True:
             if stop_event is not None and stop_event.is_set():
                 break
 
-            # If any ffmpeg process died unexpectedly, exit loop
+            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                user_input = sys.stdin.readline().strip()
+                if user_input.lower() in ("q", "quit", "exit", "stop"):
+                    utils.append_log("Stop command received from CLI.")
+                    break
+
+            now = time.monotonic()
+            if now >= next_heartbeat:
+                elapsed = now - start_t
+                utils.append_log(
+                    f"Capture heartbeat: running for {elapsed:.1f}s ({elapsed/60.0:.1f} min)"
+                )
+                next_heartbeat += 10.0
+
             for device, p in zip(devices, procs):
                 if p.poll() is not None:
-                    utils.append_log(f"FFmpeg exited unexpectedly for {device} (code={p.returncode}).")
+                    utils.append_log(
+                        f"FFmpeg exited unexpectedly for {device} (code={p.returncode})."
+                    )
                     return
 
             time.sleep(0.2)
@@ -156,5 +234,9 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
 
         for p in procs:
             p.wait()
+            dev_name = Path(device).name
+            ext = ".mkv"
+            out_file = Path(_DATA_PATH) / f"{dev_name}{ext}"
 
+            _report_file_stats(out_file)
         utils.append_log("All capture processes stopped.")

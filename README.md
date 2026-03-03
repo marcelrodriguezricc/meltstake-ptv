@@ -46,6 +46,7 @@ python -m pip install -e .
 Run the package entrypoint from the repo root:
 
 ```bash
+source .venv/bin/activate
 python -m meltstake_ptv
 ```
 

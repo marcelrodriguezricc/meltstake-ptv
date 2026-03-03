@@ -1,4 +1,6 @@
 import tomllib
+import subprocess
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -218,20 +220,48 @@ def create_log_file() -> None:
     utils.append_log(f"Stereo PTV System deployment log initialized")
     utils.append_log(f"Path to log: {log_path}")
 
-def detect_devices() -> list[str]:
-    """Detect video devices in /dev directory."""
+def detect_devices(camera_ctl: dict) -> list[str]:
+    """Detect stellarHD video devices that support requested format."""
 
-    # Initialize list
+    fmt = camera_ctl["format"]
+
+    required_format = "MJPG" if fmt == 0 else "YUYV"
+
     devices: list[str] = []
 
-    # For each video* in /dev, append to list
-    for p in Path("/dev").glob("video*"):
-        if p.name[5:].isdigit():
-            devices.append(str(p))
+    try:
+        result = subprocess.run(
+            ["v4l2-ctl", "--list-devices"],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
 
-    # Sort list by * number
-    devices.sort()
+        blocks = result.stdout.split("\n\n")
 
-    utils.append_log(f"Found the following video devices: {devices}")
+        for block in blocks:
+            if "stellarHD" in block:
+                matches = re.findall(r"/dev/video\d+", block)
+
+                for dev in matches:
+
+                    fmt_result = subprocess.run(
+                        ["v4l2-ctl", "--device", dev, "--list-formats-ext"],
+                        capture_output=True,
+                        text=True,
+                        timeout=2
+                    )
+
+                    if required_format in fmt_result.stdout:
+                        devices.append(dev)
+
+    except Exception:
+        pass
+
+    devices.sort(key=lambda x: int(x.replace("/dev/video", "")))
+
+    utils.append_log(
+        f"Found stellarHD devices supporting {required_format}: {devices}"
+    )
 
     return devices

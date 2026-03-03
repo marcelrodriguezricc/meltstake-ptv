@@ -102,7 +102,7 @@ fps = 60
 
 # ----- Compression Format -----
 # The compression method employed by the video encoder
-# (menu) mjpeg = 0, yuyv422 = 1
+# (menu) mjpg = 0, yuyv = 1
 
 format = 0
 

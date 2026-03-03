@@ -21,11 +21,11 @@ class Handler:
         bootstrap.init_data_dir(self.data_dir)
         bootstrap.create_log_file()
 
-        # Compile a list of all connected video devices
-        self.devices = bootstrap.detect_devices()
-
         # From configuration file - populate camera control setting dictionary
         self.camera_ctl = bootstrap.parse_config(self.config)
+
+        # Compile a list of all connected video devices
+        self.devices = bootstrap.detect_devices(self.camera_ctl)
 
     # Begins capture
     def start_recording(self, stop_event: threading.Event | None = None) -> None:
