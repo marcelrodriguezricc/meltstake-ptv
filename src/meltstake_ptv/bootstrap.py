@@ -21,7 +21,11 @@ _DEFAULT_CAMERA_CTL: dict[str, int] = {
     "pl_freq": 2,
     "wb_temp": 6200,
     "sharp": 0,
-    "bl_comp": 20
+    "bl_comp": 20,
+    "fps": 60,
+    "format": "mjpeg",
+    "res_x": 1600,
+    "res_y": 1200
 }
 
 def _coerce_int(val: object) -> int | None:
@@ -182,6 +186,10 @@ def parse_config(config: str) -> tuple[dict, dict]:
     _clamp_int(camera_ctl, "wb_temp", _DEFAULT_CAMERA_CTL["gain"], 2800, 6500)
     _clamp_int(camera_ctl, "sharp", _DEFAULT_CAMERA_CTL["sharp"], 0, 6)
     _clamp_int(camera_ctl, "bl_comp", _DEFAULT_CAMERA_CTL["bl_comp"], 0, 20)
+    _clamp_int(camera_ctl, "fps", _DEFAULT_CAMERA_CTL["fps"], 0, 60)
+    _clamp_int(camera_ctl, "format", _DEFAULT_CAMERA_CTL["format"], 0, 1)
+    _clamp_int(camera_ctl, "res_x", _DEFAULT_CAMERA_CTL["res_x"], 0, 1600)
+    _clamp_int(camera_ctl, "res_y", _DEFAULT_CAMERA_CTL["res_y"], 0, 1200)
 
     utils.append_log(f"Configuration file parsed - {camera_ctl}")
 
@@ -209,3 +217,21 @@ def create_log_file() -> None:
 
     utils.append_log(f"Stereo PTV System deployment log initialized")
     utils.append_log(f"Path to log: {log_path}")
+
+def detect_devices() -> list[str]:
+    """Detect video devices in /dev directory."""
+
+    # Initialize list
+    devices: list[str] = []
+
+    # For each video* in /dev, append to list
+    for p in Path("/dev").glob("video*"):
+        if p.name[5:].isdigit():
+            devices.append(str(p))
+
+    # Sort list by * number
+    devices.sort()
+
+    utils.append_log(f"Found the following video devices: {devices}")
+
+    return devices

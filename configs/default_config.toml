@@ -91,3 +91,29 @@ sharp = 0
 # (int) min = 0, max = 20
 
 bl_comp = 0
+
+# ~~~~~ Stream Settings ~~~~~
+
+# ----- Frames Per Second -----
+# The amount of times software will trigger the camera device and capture an image per second
+# (int) min = 1, max = 60
+
+fps = 60
+
+# ----- Compression Format -----
+# The compression method employed by the video encoder
+# (menu) mjpeg = 0, yuyv422 = 1
+
+format = 0
+
+# ----- Horizontal Resolution -----
+# The amount of pixels in the x direction in the resulting captured image
+# (int) min = 1, max = 1600
+
+res_x = 1600
+
+# ----- Vertical Resolution -----
+# The amount of pixels in the y direction in the resulting captured image
+# (int) min = 1, max = 1600
+
+res_y = 1200
