@@ -43,6 +43,14 @@ python -m pip install -e .
 
 ## Usage
 
+Run the package from the home directory of the Raspberry Pi:
+
+```bash
+sudo ~/meltstake-ptv/scripts/run.sh
+```
+
+OR
+
 Run the package entrypoint from the repo root:
 
 ```bash
@@ -71,6 +79,7 @@ The CLI typically accepts the following arguments:
 
 Example: 
 ```bash
+sudo ~/meltstake-ptv/scripts/run.sh --debug --config default_config --data ~/meltstake-ptv/data
 ```
 
 Config lookup behavior is intended to support filename only (under `configs/`), e.g. `--config config.toml`.
