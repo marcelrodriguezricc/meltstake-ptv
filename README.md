@@ -1,4 +1,4 @@
-# Melt Stake PTV System Controller
+# Melt Stake PTV System Controller - by Marcel Rodriguez-Riccelli
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
