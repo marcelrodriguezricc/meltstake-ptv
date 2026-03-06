@@ -35,6 +35,15 @@ This repo uses a **src/** layout:
 From the repo root:
 
 ```bash
+sudo ./meltstake-ptv/scripts/setup.sh
+```
+
+OR
+
+```bash
+sudo apt update
+sudo apt install ffmpeg -y
+sudo apt install v4l-utils -y
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip
