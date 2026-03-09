@@ -223,13 +223,18 @@ def create_log_file() -> None:
 def detect_devices(camera_ctl: dict) -> list[str]:
     """Detect stellarHD video devices that support requested format."""
 
+    # Get format from configuration
     fmt = camera_ctl["format"]
 
+    # Map menu integers to strings
     required_format = "MJPG" if fmt == 0 else "YUYV"
 
+    # Initialize array for storage of device path strings
     devices: list[str] = []
 
     try:
+
+        # List devices using V4L2
         result = subprocess.run(
             ["v4l2-ctl", "--list-devices"],
             capture_output=True,
@@ -237,9 +242,13 @@ def detect_devices(camera_ctl: dict) -> list[str]:
             timeout=2
         )
 
+        # Split results into separate by blank line
         blocks = result.stdout.split("\n\n")
 
+        # For each device...
         for block in blocks:
+
+            # If "stellarHD" is present...
             if "stellarHD" in block:
                 matches = re.findall(r"/dev/video\d+", block)
 
@@ -254,14 +263,19 @@ def detect_devices(camera_ctl: dict) -> list[str]:
 
                     if required_format in fmt_result.stdout:
                         devices.append(dev)
+            else:
+                utils.append_log(f"V4L2 did not find stellarHD devices, exiting program.")
+                raise
 
-    except Exception:
-        pass
+    except Exception as e:
+        utils.append_log(f"Runtime error while using V4L2 to find stellarHD devices: {e}")
+        raise
+    
+    finally:
+        devices.sort(key=lambda x: int(x.replace("/dev/video", "")))
 
-    devices.sort(key=lambda x: int(x.replace("/dev/video", "")))
+        utils.append_log(
+            f"Found stellarHD devices supporting {required_format}: {devices}"
+        )
 
-    utils.append_log(
-        f"Found stellarHD devices supporting {required_format}: {devices}"
-    )
-
-    return devices
+        return devices
