@@ -1,4 +1,5 @@
 import tomllib
+import sys
 import subprocess
 import re
 from datetime import datetime, timezone
@@ -263,19 +264,19 @@ def detect_devices(camera_ctl: dict) -> list[str]:
 
                     if required_format in fmt_result.stdout:
                         devices.append(dev)
-            else:
-                utils.append_log(f"V4L2 did not find stellarHD devices, exiting program.")
-                raise
 
     except Exception as e:
         utils.append_log(f"Runtime error while using V4L2 to find stellarHD devices: {e}")
         raise
+
+    if not devices:
+        utils.append_log(f"V4L2 did not find stellarHD devices, exiting program.")
+        sys.exit(1)
     
-    finally:
-        devices.sort(key=lambda x: int(x.replace("/dev/video", "")))
+    devices.sort(key=lambda x: int(x.replace("/dev/video", "")))
 
-        utils.append_log(
-            f"Found stellarHD devices supporting {required_format}: {devices}"
-        )
+    utils.append_log(
+        f"Found stellarHD devices supporting {required_format}: {devices}"
+    )
 
-        return devices
+    return devices
