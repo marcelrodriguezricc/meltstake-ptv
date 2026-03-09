@@ -52,7 +52,7 @@ python -m pip install -e .
 
 ## Usage
 
-Run the package from the home directory of the Raspberry Pi:
+(Linux Only) Run the bash script entrypoint from the home directory of the Raspberry Pi:
 
 ```bash
 sudo ~/meltstake-ptv/scripts/run.sh
@@ -60,11 +60,25 @@ sudo ~/meltstake-ptv/scripts/run.sh
 
 OR
 
-Run the package entrypoint from the repo root:
+(Mac or Linux) Run the package entrypoint from the repo root:
 
 ```bash
 source .venv/bin/activate
 python -m meltstake_ptv
+```
+
+OR
+
+(Raspberry Pi Only) Have the package run automatically on startup from service script in `scripts/ptv.py` (included in setup of [Melt Stake control software](https://github.com/marcelrodriguezricc/meltstake)).
+
+To stop:
+```bash
+sudo systemctl stop ptv
+```
+
+To restart:
+```bash
+sudo systemctl restart ptv
 ```
 
 If you prefer not to install the package, you can run using `PYTHONPATH`:
