@@ -28,7 +28,8 @@ _DEFAULT_CAMERA_CTL: dict[str, int] = {
     "fps": 60,
     "format": "mjpeg",
     "res_x": 1600,
-    "res_y": 1200
+    "res_y": 1200,
+    "segment_seconds": 300,
 }
 
 def _coerce_int(val: object) -> int | None:
@@ -193,6 +194,7 @@ def parse_config(config: str) -> tuple[dict, dict]:
     _clamp_int(camera_ctl, "format", _DEFAULT_CAMERA_CTL["format"], 0, 1)
     _clamp_int(camera_ctl, "res_x", _DEFAULT_CAMERA_CTL["res_x"], 0, 1600)
     _clamp_int(camera_ctl, "res_y", _DEFAULT_CAMERA_CTL["res_y"], 0, 1200)
+    _clamp_int(camera_ctl, "segment_seconds", _DEFAULT_CAMERA_CTL["segment_seconds"], 1, 86400)
 
     utils.append_log(f"Configuration file parsed - {camera_ctl}")
 

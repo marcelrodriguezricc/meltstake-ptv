@@ -176,6 +176,55 @@ def set_data_path(data_path):
     global _DATA_PATH
     _DATA_PATH = data_path
 
+
+def _build_ffmpeg_command(
+    device: str,
+    camera_ctl: dict,
+    out_file: Path,
+    segment_seconds: int | None = None,
+) -> list[str]:
+    """Build the FFmpeg command used to capture a device to file or segmented files."""
+
+    fps = int(camera_ctl["fps"])
+    res_x = int(camera_ctl["res_x"])
+    res_y = int(camera_ctl["res_y"])
+    format_val = int(camera_ctl["format"])
+
+    if format_val == 0:
+        format_str = "mjpeg"
+        vcodec = "copy"
+    else:
+        format_str = "yuyv422"
+        vcodec = "libx264"
+
+    cmd = [
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel", "info",
+        "-stats",
+        "-f", "v4l2",
+        "-thread_queue_size", "64",
+        "-framerate", str(fps),
+        "-video_size", f"{res_x}x{res_y}",
+        "-input_format", format_str,
+        "-i", device,
+        "-c:v", vcodec,
+    ]
+
+    if segment_seconds and segment_seconds > 0:
+        segment_pattern = out_file.with_name(f"{out_file.stem}_%03d{out_file.suffix}")
+        cmd.extend([
+            "-f", "segment",
+            "-segment_time", str(segment_seconds),
+            "-reset_timestamps", "1",
+            str(segment_pattern),
+        ])
+    else:
+        cmd.append(str(out_file))
+
+    return cmd
+
+
 def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
     """
     Initialize an FFmpeg capture process for a V4L2 device and begin recording to file.
@@ -196,46 +245,14 @@ def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
     # Apply configuration to camera device
     _apply_config(device, camera_ctl)
 
-    # Get FPS, resolution, and format values from configuration
-    fps = camera_ctl["fps"]
-    res_x = camera_ctl["res_x"]
-    res_y = camera_ctl["res_y"]
-    format_val = camera_ctl["format"]
-
-    # Parse menu from configuration to format each index pertains to
-    format_str = "mjpeg" if format_val == 0 else "yuyv422"
-
-    # Filename and argument formatting for desired format
-    if format_val == 0:
-        format_str = "mjpeg"
-        ext = ".mkv"
-        vcodec = "copy"
-    else:
-        format_str = "yuyv422"
-        ext = ".mkv"
-        vcodec = "libx264"
-
     # Set file output path
     data_path = Path(_DATA_PATH)
     dev_name = Path(device).name
-    out_file = data_path / f"{dev_name}{ext}"
+    out_file = data_path / f"{dev_name}.mkv"
     out_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Compile command based on configuration parameters
-    cmd = [
-        "ffmpeg",
-        "-hide_banner",
-        "-loglevel", "info",
-        "-stats",
-        "-f", "v4l2",
-        "-thread_queue_size", "64",
-        "-framerate", str(fps),
-        "-video_size", f"{res_x}x{res_y}",
-        "-input_format", format_str,
-        "-i", device,
-        "-c:v", vcodec,
-        str(out_file),
-    ]
+    segment_seconds = int(camera_ctl.get("segment_seconds", 300))
+    cmd = _build_ffmpeg_command(device, camera_ctl, out_file, segment_seconds)
 
     # Launch and return a running FFMPEG process
     return subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
@@ -313,13 +330,16 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
             p.terminate()
 
         # Write video file to directory
-        for p in procs:
+        for device, p in zip(devices, procs):
             p.wait()
             dev_name = Path(device).name
-            ext = ".mkv"
-            out_file = Path(_DATA_PATH) / f"{dev_name}{ext}"
-            
-            # Probe for video statistics
-            _report_file_stats(out_file)
+            out_file = Path(_DATA_PATH) / f"{dev_name}.mkv"
+            segment_files = sorted(Path(_DATA_PATH).glob(f"{dev_name}_*.mkv"))
+
+            if segment_files:
+                for segment_file in segment_files:
+                    _report_file_stats(segment_file)
+            else:
+                _report_file_stats(out_file)
 
         utils.append_log("All capture processes stopped.")

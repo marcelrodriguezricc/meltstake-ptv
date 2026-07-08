@@ -117,3 +117,9 @@ res_x = 1600
 # (int) min = 1, max = 1600
 
 res_y = 1200
+
+# ----- Recording Segment Length -----
+# Create a fresh video file every N seconds to limit loss in case of corruption
+# (int) min = 1, max = 86400
+
+segment_seconds = 300
