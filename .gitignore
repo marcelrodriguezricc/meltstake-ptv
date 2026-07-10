@@ -33,3 +33,6 @@ Thumbs.db
 # Directories generated at runtime
 logs/
 data/
+
+# CAD
+cad/
