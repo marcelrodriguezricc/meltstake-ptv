@@ -4,6 +4,7 @@ import time
 import re
 import json
 from pathlib import Path
+import shutil
 
 from . import utils
 
@@ -331,6 +332,12 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
             device_procs = _prune_finished_processes(device_procs)
             if not device_procs:
                 utils.append_log("No active capture processes remain; stopping monitoring loop.")
+                break
+
+            # check storage remaining, exit if it's full
+            free_bytes = shutil.disk_usage("/mnt/nvme/").free
+            if free_bytes < 10 * 1024 ** 3:  # less than 10 GB
+                utils.append_log("Storage is full; stopping recording.")
                 break
 
             # Check every 0.2 seconds
