@@ -4,6 +4,7 @@ import time
 import re
 import json
 from pathlib import Path
+import shutil
 
 from . import utils
 
@@ -59,7 +60,7 @@ def _apply_config(device: str, camera_ctl: dict[str, int]) -> None:
     else:
         utils.append_log(f"Successfully applied configuration to {device}")
 
-def _monitor_fps(proc: subprocess.Popen, expected_fps: int):
+def _monitor_fps(device: str, proc: subprocess.Popen, expected_fps: int):
     """Monitor for latency events — frame rate hit / dropped frames / duplicate frames — during capture"""
 
     # If FFMPEG subprocess was not set up correctly for error monitoring...
@@ -92,7 +93,7 @@ def _monitor_fps(proc: subprocess.Popen, expected_fps: int):
 
             # If the current FPS is less than 95% of expected FPS, append to log
             if current_fps < expected_fps * 0.95:
-                utils.append_log(f"FPS DROP: {current_fps:.2f}")
+                utils.append_log(f"FPS DROP ({device}): {current_fps:.2f}")
 
         # Get drop events
         drop_match = drop_pattern.search(line)
@@ -257,10 +258,29 @@ def device_record(device: str, camera_ctl: dict) -> subprocess.Popen:
     # Launch and return a running FFMPEG process
     return subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
 
+def _prune_finished_processes(
+    device_procs: list[tuple[str, subprocess.Popen]],
+) -> list[tuple[str, subprocess.Popen]]:
+    """Return only the device/process pairs that are still running."""
+
+    remaining: list[tuple[str, subprocess.Popen]] = []
+
+    for device, proc in device_procs:
+        if proc.poll() is None:
+            remaining.append((device, proc))
+        else:
+            utils.append_log(
+                f"FFmpeg exited unexpectedly for {device} (code={proc.returncode})."
+            )
+
+    return remaining
+
+
 def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | None = None) -> None:
 
     # Launch FFMPEG processes for each device and store in array
     procs = [device_record(device, camera_ctl) for device in devices]
+    device_procs = list(zip(devices, procs))
 
     # Initialize an array to store monitoring threads for each device
     monitors: list[threading.Thread] = []
@@ -271,12 +291,12 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
     utils.append_log(f"Starting recording for devices: {devices}")
 
     # For each running device...
-    for device, proc in zip(devices, procs):
+    for device, proc in device_procs:
 
         # Initialize an FPS monitor thread
         t = threading.Thread(
             target=_monitor_fps,
-            args=(proc, expected_fps),
+            args=(device, proc, expected_fps),
             daemon=True,
             name=f"ffmpeg-monitor-{device}",
         )
@@ -286,7 +306,7 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
 
         # Append the thread to the monitors array
         monitors.append(t)
-    
+
     # Establish a capture heartbeat every 10 seconds
     start_t = time.monotonic()
     next_heartbeat = start_t + 10.0
@@ -294,7 +314,7 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
     try:
         # Infinite probe loop
         while True:
-            
+
             # If CLI input triggers stop event, break loop.
             if stop_event is not None and stop_event.is_set():
                 utils.append_log("Stop requested; ending deployment.")
@@ -309,15 +329,16 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
                 )
                 next_heartbeat += 10.0
 
-            # For each device with a running FFMPEG process..
-            for device, p in zip(devices, procs):
+            device_procs = _prune_finished_processes(device_procs)
+            if not device_procs:
+                utils.append_log("No active capture processes remain; stopping monitoring loop.")
+                break
 
-                # If process unexpectedly breaks, report to log
-                if p.poll() is not None:
-                    utils.append_log(
-                        f"FFmpeg exited unexpectedly for {device} (code={p.returncode})."
-                    )
-                    return
+            # check storage remaining, exit if it's full
+            free_bytes = shutil.disk_usage("/mnt/nvme/").free
+            if free_bytes < 10 * 1024 ** 3:  # less than 10 GB
+                utils.append_log("Storage is full; stopping recording.")
+                break
 
             # Check every 0.2 seconds
             time.sleep(0.2)
@@ -326,11 +347,11 @@ def record(devices: list[str], camera_ctl: dict, stop_event: threading.Event | N
     finally:
 
         # Terminate all FFMPEG subprocesses
-        for p in procs:
+        for _, p in device_procs:
             p.terminate()
 
         # Write video file to directory
-        for device, p in zip(devices, procs):
+        for device, p in device_procs:
             p.wait()
             dev_name = Path(device).name
             out_file = Path(_DATA_PATH) / f"{dev_name}.mkv"
