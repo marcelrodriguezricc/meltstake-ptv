@@ -1,4 +1,4 @@
-# Melt Stake PTV System Controller - by Marcel Rodriguez-Riccelli
+# Meltstake PTV System Controller - by Marcel Rodriguez-Riccelli
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
@@ -6,7 +6,11 @@
 ![Platform: Raspberry%20Pi](https://img.shields.io/badge/platform-Raspberry%20Pi-C51A4A)
 ![OS: Linux](https://img.shields.io/badge/os-Linux-FCC624)
 
-Controller/data handler for integrating a stereo pair of **Deepwater Exploration stellarHD** cameras into the Melt Stake system, with additional tools for 3D Particle Tracking Velocimetry (PTV). 
+Controller/data handler for integrating a stereo pair of **Deepwater Exploration stellarHD** cameras into the Meltstake system, with additional tools for 3D Particle Tracking Velocimetry (PTV). 
+
+## About the Meltstake System
+
+The Meltstake is a multi-sensor submarine platform deployed to measure turbulent melt dynamics at near-vertical glacier ice faces. For background on the Meltstake and the science it supports, see [J. D. Nash et al., "Turbulent Dynamics of Buoyant Melt Plumes Adjacent Near-Vertical Glacier Ice," Geophysical Research Letters, vol. 51, no. 9, e2024GL108790, 2024.](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2024GL108790)
 
 ## Requirements
 
@@ -69,7 +73,7 @@ python -m meltstake_ptv
 
 OR
 
-(Raspberry Pi Only) Have the package run automatically on startup from service script in `scripts/ptv.py` (included in setup of [Melt Stake control software](https://github.com/marcelrodriguezricc/meltstake)).
+(Raspberry Pi Only) Have the package run automatically on startup from service script in `scripts/ptv.py` (included in setup of [Meltstake control software](https://github.com/marcelrodriguezricc/meltstake)).
 
 To stop:
 ```bash
